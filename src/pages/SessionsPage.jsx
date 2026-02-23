@@ -20,7 +20,7 @@ import MessageList from "../components/sessions/MessageList";
 import MessageInput from "../components/sessions/MessageInput";
 import SessionSidebar from "../components/sessions/SessionSidebar";
 import { toast } from "react-hot-toast";
-import { generateMeetingLink } from "../utils/meetingUtils";
+import { createMeeting, generateMeetingLink } from "../utils/meetingUtils";
 import { useTheme } from "../contexts/ThemeContext";
 import { motion } from "framer-motion";
 
@@ -190,7 +190,28 @@ const SessionsPage = () => {
     if (!activeSession) return;
 
     try {
-      const meetingLink = generateMeetingLink();
+      // Create meeting through backend API
+      const participants = [
+        {
+          userId: activeSession.requesterId,
+          name: activeSession.requesterName,
+          email: activeSession.requesterEmail
+        },
+        {
+          userId: activeSession.recipientId,
+          name: activeSession.recipientName,
+          email: activeSession.recipientEmail
+        }
+      ];
+      
+      const meetingResponse = await createMeeting(
+        participants,
+        sessionData.date,
+        sessionData.time,
+        sessionData.duration
+      );
+      
+      const meetingLink = generateMeetingLink(meetingResponse.meeting.roomId);
 
       await addDoc(
         collection(db, "exchanges", activeSession.id, "messages"),
