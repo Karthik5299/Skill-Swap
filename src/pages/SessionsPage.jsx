@@ -9,6 +9,8 @@ import {
   doc,
   getDoc,
   addDoc,
+  updateDoc,
+  deleteDoc,
   serverTimestamp,
   orderBy,
   writeBatch,
@@ -20,7 +22,7 @@ import MessageList from "../components/sessions/MessageList";
 import MessageInput from "../components/sessions/MessageInput";
 import SessionSidebar from "../components/sessions/SessionSidebar";
 import { toast } from "react-hot-toast";
-import { createMeeting, generateMeetingLink } from "../utils/meetingUtils";
+import { generateMeetingLink } from "../utils/meetingUtils";
 import { useTheme } from "../contexts/ThemeContext";
 import { motion } from "framer-motion";
 
@@ -35,11 +37,17 @@ const SessionsPage = () => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [replyTo, setReplyTo] = useState(null); // NEW: For reply functionality
 
   // ---------------- FETCH USER DATA ----------------
   const fetchUserData = useCallback(async (userId) => {
-    const userDoc = await getDoc(doc(db, "users", userId));
-    return userDoc.exists() ? userDoc.data() : null;
+    try {
+      const userDoc = await getDoc(doc(db, "users", userId));
+      return userDoc.exists() ? userDoc.data() : null;
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      return null;
+    }
   }, []);
 
   // ---------------- FETCH SESSIONS ----------------
@@ -131,26 +139,147 @@ const SessionsPage = () => {
     return () => unsubscribe();
   }, [activeSession?.id]);
 
-  // ---------------- SEND TEXT MESSAGE ----------------
-  const handleSendMessage = async (text) => {
+  // ---------------- MARK MESSAGES AS READ ----------------
+  useEffect(() => {
+    if (!activeSession?.id || !currentUser?.uid || !messages.length) return;
+
+    const markAsRead = async () => {
+      try {
+        const batch = writeBatch(db);
+        let hasUpdates = false;
+
+        messages.forEach((message) => {
+          // Mark other user's unread messages as read
+          if (
+            message.senderId !== currentUser.uid &&
+            message.status !== "read" &&
+            !message.readBy?.includes(currentUser.uid)
+          ) {
+            const messageRef = doc(
+              db,
+              "exchanges",
+              activeSession.id,
+              "messages",
+              message.id
+            );
+            batch.update(messageRef, {
+              status: "read",
+              readBy: [...(message.readBy || []), currentUser.uid],
+            });
+            hasUpdates = true;
+          }
+        });
+
+        if (hasUpdates) {
+          await batch.commit();
+        }
+      } catch (error) {
+        console.error("Error marking messages as read:", error);
+      }
+    };
+
+    // Mark as read after a short delay
+    const timer = setTimeout(markAsRead, 500);
+    return () => clearTimeout(timer);
+  }, [activeSession?.id, currentUser?.uid, messages]);
+
+  // ---------------- SEND TEXT MESSAGE (ENHANCED) ----------------
+  const handleSendMessage = async (text, options = {}) => {
     if (!activeSession || !text.trim()) return;
 
     try {
+      // Get user photo from Firestore
+      let senderPhoto = "";
+      try {
+        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+        if (userDoc.exists()) {
+          senderPhoto = userDoc.data().photoURL || "";
+        }
+      } catch (err) {
+        console.error("Failed to fetch user photo:", err);
+        senderPhoto = currentUser.photoURL || "";
+      }
+
+      const newMessage = {
+        text,
+        senderId: currentUser.uid,
+        senderName: currentUser.displayName || "Anonymous",
+        senderPhoto: senderPhoto,
+        timestamp: serverTimestamp(),
+        status: "sent",
+        type: "text",
+        ...(options.replyTo && { replyTo: options.replyTo }),
+      };
+
       await addDoc(
         collection(db, "exchanges", activeSession.id, "messages"),
-        {
-          text,
-          senderId: currentUser.uid,
-          senderName: currentUser.displayName,
-          senderPhoto: currentUser.photoURL || "",
-          timestamp: serverTimestamp(),
-          type: "text",
-        }
+        newMessage
       );
+
+      setReplyTo(null);
+
+      // Update status to delivered
+      setTimeout(async () => {
+        try {
+          const messagesRef = collection(
+            db,
+            "exchanges",
+            activeSession.id,
+            "messages"
+          );
+          const q = query(
+            messagesRef,
+            where("senderId", "==", currentUser.uid),
+            where("status", "==", "sent")
+          );
+          const snapshot = await getDocs(q);
+          const batch = writeBatch(db);
+
+          snapshot.forEach((doc) => {
+            batch.update(doc.ref, { status: "delivered" });
+          });
+
+          await batch.commit();
+        } catch (error) {
+          console.error("Error updating message status:", error);
+        }
+      }, 1000);
     } catch (error) {
       console.error(error);
       toast.error("Failed to send message");
     }
+  };
+
+  // ---------------- DELETE MESSAGE ----------------
+  const handleDeleteMessage = async (message) => {
+    if (!activeSession || message.senderId !== currentUser.uid) {
+      toast.error("You can only delete your own messages");
+      return;
+    }
+
+    try {
+      await deleteDoc(
+        doc(db, "exchanges", activeSession.id, "messages", message.id)
+      );
+      toast.success("Message deleted");
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      toast.error("Failed to delete message");
+    }
+  };
+
+  // ---------------- HANDLE REPLY ----------------
+  const handleReply = (message) => {
+    setReplyTo({
+      id: message.id,
+      text: message.text,
+      senderName: message.senderName || "User",
+    });
+  };
+
+  // ---------------- CANCEL REPLY ----------------
+  const handleCancelReply = () => {
+    setReplyTo(null);
   };
 
   // ---------------- CLEAR CHAT ----------------
@@ -185,33 +314,23 @@ const SessionsPage = () => {
     }
   };
 
-  // ---------------- SCHEDULE SESSION (SEND LINK IN CHAT ONLY) ----------------
+  // ---------------- SCHEDULE SESSION ----------------
   const handleScheduleSession = async (sessionData) => {
     if (!activeSession) return;
 
     try {
-      // Create meeting through backend API
-      const participants = [
-        {
-          userId: activeSession.requesterId,
-          name: activeSession.requesterName,
-          email: activeSession.requesterEmail
-        },
-        {
-          userId: activeSession.recipientId,
-          name: activeSession.recipientName,
-          email: activeSession.recipientEmail
+      let senderPhoto = "";
+      try {
+        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+        if (userDoc.exists()) {
+          senderPhoto = userDoc.data().photoURL || "";
         }
-      ];
-      
-      const meetingResponse = await createMeeting(
-        participants,
-        sessionData.date,
-        sessionData.time,
-        sessionData.duration
-      );
-      
-      const meetingLink = generateMeetingLink(meetingResponse.meeting.roomId);
+      } catch (err) {
+        senderPhoto = currentUser.photoURL || "";
+      }
+
+
+      const meetingLink = generateMeetingLink();
 
       await addDoc(
         collection(db, "exchanges", activeSession.id, "messages"),
@@ -225,7 +344,8 @@ const SessionsPage = () => {
           timestamp: serverTimestamp(),
           senderId: currentUser.uid,
           senderName: currentUser.displayName,
-          senderPhoto: currentUser.photoURL || "",
+          senderPhoto: senderPhoto,
+          status: "sent",
         }
       );
 
@@ -255,7 +375,11 @@ const SessionsPage = () => {
   }
 
   return (
-    <div className={`flex h-screen ${theme.mode === "dark" ? "bg-gray-900" : "bg-gray-50"}`}>
+    <div
+      className={`flex h-[calc(100vh-64px)] overflow-x-hidden overflow-y-hidden ${
+        theme.mode === "dark" ? "bg-gray-900" : "bg-gray-50"
+      }`}
+    >
       <SessionSidebar
         sessions={filteredSessions}
         activeSession={activeSession}
@@ -264,11 +388,16 @@ const SessionsPage = () => {
         onSessionSelect={(session) => {
           setActiveSession(session);
           navigate(`/sessions/${session.id}`);
+          setReplyTo(null);
         }}
       />
 
       {activeSession ? (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex-1 flex flex-col h-full overflow-hidden"
+        >
           <ChatHeader
             session={activeSession}
             currentUser={currentUser}
@@ -279,21 +408,27 @@ const SessionsPage = () => {
             messages={messages}
             currentUserId={currentUser.uid}
             session={activeSession}
+            onReply={handleReply}
+            onDelete={handleDeleteMessage}
           />
           <MessageInput
             onSendMessage={handleSendMessage}
             currentUser={currentUser}
             mySkillsToTeach={activeSession?.mySkillsToTeach || []}
             mySkillsToLearn={activeSession?.mySkillsToLearn || []}
+            replyTo={replyTo}
+            onCancelReply={handleCancelReply}
           />
         </motion.div>
       ) : (
         <div className="flex-1 flex items-center justify-center">
-          <p>Select a session to start chatting</p>
+          <p className="text-gray-500 dark:text-gray-400">
+            Select a session to start chatting
+          </p>
         </div>
       )}
     </div>
   );
 };
 
-export default SessionsPage;
+export default SessionsPage;9

@@ -18,7 +18,7 @@ import { useNavigate } from "react-router-dom";
 import UserCard from "../components/exchange/UserCard";
 import ExchangeFilter from "../components/exchange/ExchangeFilter";
 import ExchangeRequestModal from "../components/exchange/ExchangeRequestModal";
-import { createMeeting, generateMeetingLink } from "../utils/meetingUtils";
+import { generateMeetingLink } from "../utils/meetingUtils";
 import { FiFilter, FiUsers, FiStar, FiSearch } from "react-icons/fi";
 
 const ExchangePage = () => {
@@ -135,6 +135,8 @@ const ExchangePage = () => {
       if (!userProfile?.uid) {
         throw new Error("Recipient user data is not available");
       }
+
+      const meetingLink = generateMeetingLink();
       
       // Get both user profiles to ensure we have complete data
       const requesterDoc = await getDoc(doc(db, "users", currentUser.uid));
@@ -142,29 +144,6 @@ const ExchangePage = () => {
       
       const requesterData = requesterDoc.data();
       const recipientData = recipientDoc.data();
-      
-      // Create meeting through backend API
-      const participants = [
-        {
-          userId: currentUser.uid,
-          name: requesterData?.displayName || currentUser.displayName,
-          email: requesterData?.email || currentUser.email
-        },
-        {
-          userId: userProfile.uid,
-          name: recipientData?.displayName || userProfile.displayName,
-          email: recipientData?.email || userProfile.email
-        }
-      ];
-      
-      const meetingResponse = await createMeeting(
-        participants,
-        requestData.date,
-        requestData.time,
-        requestData.duration
-      );
-      
-      const meetingLink = generateMeetingLink(meetingResponse.meeting.roomId);
 
       const exchangeData = {
         participants: [currentUser.uid, userProfile.uid],

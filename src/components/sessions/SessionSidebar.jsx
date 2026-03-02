@@ -36,11 +36,11 @@ const SessionSidebar = ({
 
   return (
     <div
-      className={`w-80 border-r ${theme.mode === "dark" ? "border-gray-700 bg-gray-800/80" : "border-gray-200 bg-white/80"} flex flex-col backdrop-blur-lg`}
+      className={`w-64 min-w-[256px] border-r flex-shrink-0 h-full ${theme.mode === "dark" ? "border-gray-700 bg-gray-800/80" : "border-gray-200 bg-white/80"} flex flex-col backdrop-blur-lg`}
     >
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             My Exchanges
           </h2>
         </div>

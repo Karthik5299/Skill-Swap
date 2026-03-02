@@ -12,32 +12,6 @@ import { doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "react-hot-toast";
 
-// ── Reusable Avatar component ─────────────────────────────────────────────────
-const Avatar = ({ photo, name, size = "h-12 w-12" }) => {
-  const [imgError, setImgError] = useState(false);
-  const initial = name?.charAt(0).toUpperCase() || "U";
-
-  if (photo && !imgError) {
-    return (
-      <img
-        key={photo}
-        className={`${size} rounded-full object-cover border-2 border-white dark:border-gray-700 shadow flex-shrink-0`}
-        src={photo}
-        alt={name}
-        onError={() => setImgError(true)}
-      />
-    );
-  }
-
-  return (
-    <div className={`${size} rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold flex-shrink-0`}>
-      <span className={size === "h-8 w-8" ? "text-xs" : "text-sm"}>
-        {initial}
-      </span>
-    </div>
-  );
-};
-
 const ResourceCard = ({ resource, currentUser }) => {
   const [commentText, setCommentText] = useState("");
   const [showComments, setShowComments] = useState(false);
@@ -115,8 +89,13 @@ const ResourceCard = ({ resource, currentUser }) => {
     >
       <div className="p-6">
         <div className="flex items-start mb-4">
-          <div className="relative">
-            <Avatar photo={resource.authorPhoto} name={resource.authorName} size="h-12 w-12" />
+          {resource.authorPhoto ? (
+            <div className="relative">
+              <img
+                className="h-12 w-12 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow"
+                src={resource.authorPhoto}
+                alt={resource.authorName}
+              />
               <div className="absolute -bottom-1 -right-1 bg-indigo-500 rounded-full p-1">
                 <svg
                   className="h-4 w-4 text-white"
@@ -133,6 +112,11 @@ const ResourceCard = ({ resource, currentUser }) => {
                 </svg>
               </div>
             </div>
+          ) : (
+            <div className="h-12 w-12 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold">
+              {resource.authorName.charAt(0).toUpperCase()}
+            </div>
+          )}
           <div className="ml-4">
             <h3 className="text-sm font-medium text-gray-900 dark:text-white">
               {resource.authorName}
@@ -223,8 +207,18 @@ const ResourceCard = ({ resource, currentUser }) => {
                   .sort((a, b) => b.createdAt - a.createdAt)
                   .map((comment, index) => (
                     <div key={index} className="flex items-start">
-                      <Avatar photo={comment.authorPhoto} name={comment.authorName} size="h-8 w-8" />
-                      <div className="flex-1 ml-3">
+                      {comment.authorPhoto ? (
+                        <img
+                          className="h-8 w-8 rounded-full object-cover mr-3"
+                          src={comment.authorPhoto}
+                          alt={comment.authorName}
+                        />
+                      ) : (
+                        <div className="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold mr-3">
+                          {comment.authorName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="flex-1">
                         <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3">
                           <div className="flex justify-between items-start">
                             <span className="text-xs font-medium text-gray-900 dark:text-white">

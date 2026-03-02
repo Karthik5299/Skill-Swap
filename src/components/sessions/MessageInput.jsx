@@ -6,6 +6,7 @@ import {
   FiChevronDown,
   FiBookOpen,
   FiStar,
+  FiX,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -15,6 +16,8 @@ const MessageInput = ({
   onSendResource,
   mySkillsToTeach = [],
   mySkillsToLearn = [],
+  replyTo = null,
+  onCancelReply,
 }) => {
   const { theme } = useTheme();
   const [message, setMessage]       = useState("");
@@ -30,7 +33,20 @@ const MessageInput = ({
     e.preventDefault();
     const trimmed = message.trim();
     if (!trimmed) return;
-    onSendMessage(trimmed);
+    
+    // Include reply data if replying
+    if (replyTo) {
+      onSendMessage(trimmed, {
+        replyTo: {
+          id: replyTo.id,
+          text: replyTo.text,
+          senderName: replyTo.senderName || "User",
+        }
+      });
+    } else {
+      onSendMessage(trimmed);
+    }
+    
     setMessage("");
     inputRef.current?.focus();
   };
@@ -62,6 +78,39 @@ const MessageInput = ({
         dark ? "border-gray-700 bg-gray-800/80" : "border-gray-200 bg-white/80"
       } backdrop-blur-lg`}
     >
+      {/* ── Reply Preview ─────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {replyTo && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className={`px-4 py-2 border-l-4 border-indigo-500 ${
+              dark ? "bg-gray-700/50" : "bg-gray-100"
+            } flex items-start justify-between`}
+          >
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                Replying to {replyTo.senderName || "User"}
+              </div>
+              <div className={`text-sm truncate ${
+                dark ? "text-gray-300" : "text-gray-600"
+              }`}>
+                {replyTo.text}
+              </div>
+            </div>
+            <button
+              onClick={onCancelReply}
+              className={`ml-2 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 ${
+                dark ? "text-gray-400" : "text-gray-500"
+              }`}
+            >
+              <FiX className="h-4 w-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── Skills panel ──────────────────────────────────────────────────── */}
       <AnimatePresence>
         {showSkills && (
@@ -201,7 +250,11 @@ const MessageInput = ({
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder={
-            showSkills ? "Click a skill chip above…" : "Type a message…"
+            replyTo 
+              ? `Reply to ${replyTo.senderName || "User"}...` 
+              : showSkills 
+              ? "Click a skill chip above…" 
+              : "Type a message…"
           }
           className={`flex-1 rounded-full px-4 py-2 focus:outline-none border focus:ring-2 focus:ring-indigo-500 text-sm ${
             dark

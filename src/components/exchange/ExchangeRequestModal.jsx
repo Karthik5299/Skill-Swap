@@ -9,7 +9,7 @@ import {
   FiUser,
 } from "react-icons/fi";
 import { toast } from "react-hot-toast";
-
+import { generateMeetingLink } from "../../utils/meetingUtils";
 import { useTheme } from "../../contexts/ThemeContext";
 
 const ExchangeRequestModal = ({ user, onClose, currentUser, onSubmit }) => {
@@ -35,11 +35,13 @@ const ExchangeRequestModal = ({ user, onClose, currentUser, onSubmit }) => {
 
     setIsSubmitting(true);
     try {
+      const meetingLink = generateMeetingLink();
       const requestData = {
         message,
         date,
         time,
         duration: parseInt(duration),
+        meetingLink,
       };
       await onSubmit(requestData);
       closeModal();

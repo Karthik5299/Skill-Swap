@@ -16,14 +16,11 @@ const UserCard = ({ user, onClick }) => {
       <div className="p-6">
         <div className="flex items-center">
           <div className="relative">
-            <div className="h-12 w-12 rounded-full overflow-hidden border-2 border-white/20 bg-gray-200 dark:bg-gray-700">
-              <img
-                className="h-full w-full object-cover"
-                src={user.photoURL || ProfilePlaceholder}
-                alt={user.displayName}
-                onError={(e) => { e.target.src = ProfilePlaceholder; }}
-              />
-            </div>
+            <img
+              className="h-12 w-12 rounded-full object-cover border-2 border-white/20"
+              src={user.photoURL || ProfilePlaceholder}
+              alt={user.displayName}
+            />
             <div className="absolute -bottom-1 -right-1 bg-indigo-500 rounded-full p-1">
               <FiUser className="h-3 w-3 text-white" />
             </div>

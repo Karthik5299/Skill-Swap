@@ -8,7 +8,6 @@ import ProfilePlaceholder from "../assets/profile-placeholder.svg";
 import {
   FiX,
   FiPlus,
-  FiLink,
   FiLoader,
   FiEdit2,
   FiSave,
@@ -58,16 +57,17 @@ const ProfilePage = () => {
     skillsToTeach: [],
     skillsToLearn: [],
     photoURL: "",
+    coverPhoto: "",
   });
 
   const [newSkill,     setNewSkill]     = useState({ teach: "", learn: "" });
   const [loading,      setLoading]      = useState(true);
   const [submitting,   setSubmitting]   = useState(false);
   const [uploading,    setUploading]    = useState(false);
-  const [imageUrlInput,setImageUrlInput]= useState("");
-  const [showUrlInput, setShowUrlInput] = useState(false);
   const [isEditing,    setIsEditing]    = useState(false);
   const [photoChanged, setPhotoChanged] = useState(false);
+  const [coverChanged, setCoverChanged] = useState(false);
+  const coverFileInputRef = useRef(null);
 
   // ─── Load profile from Firestore ──────────────────────────────────────────
   useEffect(() => {
@@ -91,8 +91,9 @@ const ProfilePage = () => {
             skillsToTeach: data.skillsToTeach || [],
             skillsToLearn: data.skillsToLearn || [],
             photoURL:      data.photoURL      || "",
+            coverPhoto:    data.coverPhoto    || "",
           });
-          setImageUrlInput(data.photoURL || "");
+        
         } else {
           // First time – create document
           const initial = {
@@ -101,6 +102,7 @@ const ProfilePage = () => {
             skillsToTeach: [],
             skillsToLearn: [],
             photoURL:      currentUser.photoURL || "",
+            coverPhoto:    "",
             email:         currentUser.email,
             uid:           currentUser.uid,
             createdAt:     serverTimestamp(),
@@ -151,19 +153,24 @@ const ProfilePage = () => {
   };
 
   // ─── Use a URL instead ─────────────────────────────────────────────────────
-  const handleAddImageUrl = () => {
-    const url = imageUrlInput.trim();
-    if (!url) { toast.error("Please enter a URL"); return; }
+  
+
+  
+
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    if (!file.type.startsWith("image/")) { toast.error("Please choose an image file (JPG, PNG, WEBP…)"); return; }
     try {
-      new URL(url);
-    } catch {
-      toast.error("Please enter a valid URL (https://…)");
-      return;
+      const compressed = await compressImage(file);
+      setFormData((prev) => ({ ...prev, coverPhoto: compressed }));
+      setCoverChanged(true);
+      toast.success("Cover ready — click Save Changes to apply ✅");
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not process cover image. Try another file.");
     }
-    setFormData((prev) => ({ ...prev, photoURL: url }));
-    setPhotoChanged(true);
-    setShowUrlInput(false);
-    toast.success("URL saved — click Save Changes to apply ✅");
   };
 
   // ─── Skills ────────────────────────────────────────────────────────────────
@@ -215,6 +222,7 @@ const ProfilePage = () => {
         skillsToTeach: formData.skillsToTeach,
         skillsToLearn: formData.skillsToLearn,
         photoURL:      formData.photoURL,   // base64 or URL – stored here
+        coverPhoto:    formData.coverPhoto || "",
         email:         currentUser.email,
         uid:           currentUser.uid,
         updatedAt:     serverTimestamp(),
@@ -234,6 +242,7 @@ const ProfilePage = () => {
             skillsToTeach: formData.skillsToTeach,
             skillsToLearn: formData.skillsToLearn,
             photoURL:      formData.photoURL,
+            coverPhoto:    formData.coverPhoto || "",
             email:         currentUser.email,
             uid:           currentUser.uid,
             createdAt:     serverTimestamp(),
@@ -283,7 +292,23 @@ const ProfilePage = () => {
           className={`glass rounded-3xl overflow-hidden shadow-2xl ${dark ? "border border-gray-700" : "border border-white"}`}
         >
           {/* Cover banner */}
-          <div className={`h-48 ${dark ? "bg-gradient-to-r from-gray-800 to-gray-900" : "bg-gradient-to-r from-indigo-100 to-purple-100"}`}>
+          <div
+            className={`h-48 relative ${dark ? "bg-gradient-to-r from-gray-800 to-gray-900" : "bg-gradient-to-r from-indigo-100 to-purple-100"}`}
+            style={formData.coverPhoto ? { backgroundImage: `url(${formData.coverPhoto})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
+          >
+            {/* Cover edit controls */}
+            {isEditing && (
+              <div className="absolute right-4 top-4 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => coverFileInputRef.current?.click()}
+                  className="bg-black/40 hover:bg-black/50 text-white p-2 rounded-md shadow"
+                >
+                  <FiCamera className="h-5 w-5" />
+                </button>
+              </div>
+            )}
+            <input ref={coverFileInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
             {/* Avatar */}
             <div className="absolute ml-8 mt-28">
               <div className="relative group w-32 h-32">
@@ -372,48 +397,7 @@ const ProfilePage = () => {
               </div>
             )}
 
-            {/* URL input toggle */}
-            {isEditing && (
-              <div className="mb-5">
-                <button
-                  type="button"
-                  onClick={() => setShowUrlInput(!showUrlInput)}
-                  className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-indigo-500 transition-colors"
-                >
-                  <FiLink className="h-4 w-4" />
-                  {showUrlInput ? "Hide URL input" : "Or use an image URL instead"}
-                </button>
-                {showUrlInput && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    className="mt-3 flex gap-2 overflow-hidden"
-                  >
-                    <input
-                      type="url"
-                      value={imageUrlInput}
-                      onChange={(e) => setImageUrlInput(e.target.value)}
-                      placeholder="https://example.com/photo.jpg"
-                      className="flex-1 px-4 py-2 rounded-lg border-0 focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddImageUrl}
-                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium"
-                    >
-                      Use URL
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowUrlInput(false)}
-                      className="px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 text-gray-600 dark:text-gray-300 rounded-lg"
-                    >
-                      <FiX className="h-4 w-4" />
-                    </button>
-                  </motion.div>
-                )}
-              </div>
-            )}
+            
 
             {/* Display Name */}
             <div className="mb-5">

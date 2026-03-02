@@ -42,7 +42,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       <div
         className={`${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } fixed inset-y-0 left-0 z-40 w-72 transform transition-all duration-300 ease-in-out md:hidden`}
+        } fixed inset-y-0 left-0 z-40 w-56 transform transition-all duration-300 ease-in-out md:hidden`}
         style={sidebarStyle}
       >
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200/20">
@@ -76,7 +76,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
                 key={item.name}
                 to={item.path}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center px-4 py-3.5 mb-1 rounded-xl text-sm font-medium transition-all duration-300 ${
+                className={`flex items-center px-3 py-2.5 mb-1 rounded-xl text-xs font-medium transition-all duration-300 ${
                   isActive
                     ? theme.mode === "dark"
                       ? "bg-indigo-600/20 text-indigo-400 border border-indigo-400/30 shadow-md"
@@ -101,7 +101,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
 
       <div className="hidden md:flex md:flex-shrink-0">
         <div
-          className="flex flex-col w-72 h-screen sticky top-0 overflow-hidden"
+          className="flex flex-col w-56 fixed left-0 top-16 bottom-0 z-40"
           style={sidebarStyle}
         >
           <div className="flex items-center h-16 px-6 border-b border-gray-200/20">
@@ -109,14 +109,14 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
               SkillSwap
             </span>
           </div>
-          <nav className="flex-1 px-3 py-6">
+          <nav className="flex-1 px-3 py-6 overflow-y-auto">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <Link
                   key={item.name}
                   to={item.path}
-                  className={`flex items-center px-4 py-3.5 mb-1 rounded-xl text-sm font-medium transition-all duration-300 ${
+                  className={`flex items-center px-3 py-2.5 mb-1 rounded-xl text-xs font-medium transition-all duration-300 ${
                     isActive
                       ? theme.mode === "dark"
                         ? "bg-indigo-600/20 text-indigo-400 border border-indigo-400/30 shadow-md"

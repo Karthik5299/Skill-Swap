@@ -15,13 +15,13 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   useEffect(() => {
     const checkScreenSize = () => {
       const isMobile = window.innerWidth <= 768;
-      setShowMenuButton(currentUser && isMobile && !sidebarOpen);
+      setShowMenuButton(currentUser && isMobile);
     };
 
     checkScreenSize();
     window.addEventListener("resize", checkScreenSize);
     return () => window.removeEventListener("resize", checkScreenSize);
-  }, [currentUser, sidebarOpen]);
+  }, [currentUser]);
 
   return (
     <header
@@ -77,11 +77,23 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
             {currentUser ? (
               <Menu as="div" className="relative">
                 <Menu.Button className="flex items-center space-x-2 focus:outline-none">
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white font-medium shadow-md">
-                    {currentUser.displayName
-                      ? currentUser.displayName.charAt(0).toUpperCase()
-                      : currentUser.email.charAt(0).toUpperCase()}
-                  </div>
+                  {currentUser.photoURL ? (
+                    <img
+                      src={currentUser.photoURL}
+                      alt={currentUser.displayName || "Profile"}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = Logo;
+                      }}
+                      className="h-8 w-8 rounded-full object-cover shadow-md"
+                    />
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white font-medium shadow-md">
+                      {currentUser.displayName
+                        ? currentUser.displayName.charAt(0).toUpperCase()
+                        : currentUser.email.charAt(0).toUpperCase()}
+                    </div>
+                  )}
                 </Menu.Button>
                 <Transition
                   as={Fragment}

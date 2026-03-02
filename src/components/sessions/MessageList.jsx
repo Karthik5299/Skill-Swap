@@ -191,6 +191,11 @@ const MessageList = ({ messages = [], currentUserId, session }) => {
           ? "bg-gray-900/50"
           : "bg-gray-50"
       }`}
+      style={{ 
+        height: '100%',
+        overflowY: 'auto',
+        scrollBehavior: 'smooth' 
+      }}
     >
       {messages.length === 0 ? (
         <div className="flex items-center justify-center h-full">

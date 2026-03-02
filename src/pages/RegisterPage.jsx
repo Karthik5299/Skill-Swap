@@ -24,20 +24,9 @@ const RegisterPage = () => {
       toast.success("Account created successfully!");
       navigate("/profile");
     } catch (error) {
-      console.error("Signup error:", error);
-      // Provide user-friendly error messages
-      if (error.code === "auth/email-already-in-use") {
-        toast.error("This email is already registered. Please sign in instead.");
-      } else if (error.code === "auth/weak-password") {
-        toast.error("Password should be at least 6 characters.");
-      } else if (error.code === "auth/invalid-email") {
-        toast.error("Please enter a valid email address.");
-      } else {
-        toast.error("Failed to create account: " + error.message);
-      }
-    } finally {
-      setLoading(false);
+      toast.error("Failed to create account: " + error.message);
     }
+    setLoading(false);
   };
 
   return (
