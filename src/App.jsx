@@ -16,6 +16,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import "./styles/global.css";
 import SessionsPage from "./pages/SessionsPage";
 import NotificationsPage from "./pages/NotificationsPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
               <Route element={<PrivateRoute />}>
                 <Route path="/profile" element={<ProfilePage />} />

@@ -19,8 +19,7 @@ const RegisterPage = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      await signup(email, password);
-      await updateUserProfile({ displayName });
+      await signup(email, password, displayName);
       toast.success("Account created successfully!");
       navigate("/profile");
     } catch (error) {
