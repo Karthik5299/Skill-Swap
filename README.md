@@ -11,6 +11,8 @@
 
 *Connect with people who want to share their skills and learn from you.*
 
+### 🌐 [Live Demo](https://skillswap-4579b.web.app/) | [GitHub](https://github.com/Karthik5299/Skill-Swap)
+
 </div>
 
 ---
@@ -87,7 +89,17 @@ SkillSwap is a modern peer-to-peer skill exchange platform that connects learner
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### 🌟 Try It Now!
+
+**Live Demo:** [https://skillswap-4579b.web.app/](https://skillswap-4579b.web.app/)
+
+No installation required - just visit the link and start exploring!
+
+---
+
+### 💻 Run Locally
+
+#### Prerequisites
 - Node.js (v16+)
 - npm or yarn
 - Firebase account
@@ -96,8 +108,8 @@ SkillSwap is a modern peer-to-peer skill exchange platform that connects learner
 
 1. **Clone repository:**
 ```bash
-git clone https://github.com/yourusername/skillswap.git
-cd skillswap
+git clone https://github.com/Karthik5299/Skill-Swap.git
+cd Skill-Swap
 ```
 
 2. **Install dependencies:**
@@ -192,11 +204,25 @@ service cloud.firestore {
 
 ## 🚢 Deployment
 
-### Firebase Hosting
+### 🌐 Live Application
+
+The application is currently deployed and accessible at:
+
+**🔗 [https://skillswap-4579b.web.app/](https://skillswap-4579b.web.app/)**
+
+Hosted on **Firebase Hosting** with automatic SSL and global CDN.
+
+---
+
+### Deploy Your Own Instance
+
+#### Firebase Hosting
 ```bash
 npm run build
 firebase deploy
 ```
+
+
 ---
 
 ## 🐛 Troubleshooting
@@ -235,8 +261,9 @@ MIT License - see [LICENSE](LICENSE) file
 
 **Jami Karthikeya**
 
-- GitHub: [[@karthik5299](https://github.com/Karthik5299/Skill-Swap)]()
-- Email: jamikarthikeya99@gmail.com
+- GitHub: [@Karthik5299](https://github.com/Karthik5299)
+- Repository: [Skill-Swap](https://github.com/Karthik5299/Skill-Swap)
+- Email: jamikarthikeya@gmail.com
 
 ---
 
