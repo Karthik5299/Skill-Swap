@@ -136,7 +136,13 @@ const ExchangePage = () => {
         throw new Error("Recipient user data is not available");
       }
 
-      const meetingLink = generateMeetingLink();
+      // Generate Jitsi meeting link with participants and session details
+      const participants = [currentUser.uid, userProfile.uid];
+      const meetingLink = generateMeetingLink(
+        participants, 
+        requestData.date, 
+        requestData.time
+      );
       
       // Get both user profiles to ensure we have complete data
       const requesterDoc = await getDoc(doc(db, "users", currentUser.uid));

@@ -329,8 +329,13 @@ const SessionsPage = () => {
         senderPhoto = currentUser.photoURL || "";
       }
 
-
-      const meetingLink = generateMeetingLink();
+      // Generate Jitsi meeting link with participants and session details
+      const participants = activeSession.participants || [currentUser.uid];
+      const meetingLink = generateMeetingLink(
+        participants, 
+        sessionData.date, 
+        sessionData.time
+      );
 
       await addDoc(
         collection(db, "exchanges", activeSession.id, "messages"),

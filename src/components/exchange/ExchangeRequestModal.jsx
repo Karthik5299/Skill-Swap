@@ -35,7 +35,10 @@ const ExchangeRequestModal = ({ user, onClose, currentUser, onSubmit }) => {
 
     setIsSubmitting(true);
     try {
-      const meetingLink = generateMeetingLink();
+      // Generate Jitsi meeting link with participants and session details
+      const participants = [currentUser.uid, user.uid];
+      const meetingLink = generateMeetingLink(participants, date, time);
+      
       const requestData = {
         message,
         date,

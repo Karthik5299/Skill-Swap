@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useEffect } from "react";
 import { format } from "date-fns";
-import { FiVideo, FiLink, FiFile, FiCheck } from "react-icons/fi";
+import { FiVideo, FiLink, FiFile, FiCheck, FiCheckCircle, FiClock } from "react-icons/fi";
 import { motion } from "framer-motion";
 import { useTheme } from "../../contexts/ThemeContext";
 
@@ -55,6 +55,39 @@ const MessageList = ({ messages = [], currentUserId, session }) => {
       return "Just now";
     } catch {
       return "Just now";
+    }
+  };
+
+  // ---------------- MESSAGE STATUS ICON (WhatsApp-like) ----------------
+  const getStatusIcon = (message) => {
+    const isCurrentUser = message.senderId === currentUserId;
+    if (!isCurrentUser) return null;
+
+    const otherParticipant = session?.participants?.find(id => id !== currentUserId);
+    const isRead = message.status === "read" || message.readBy?.includes(otherParticipant);
+
+    if (isRead) {
+      // Double blue checkmarks (read)
+      return (
+        <div className="flex items-center -space-x-1">
+          <FiCheck className="text-xs text-blue-400" />
+          <FiCheck className="text-xs text-blue-400" />
+        </div>
+      );
+    } else if (message.status === "delivered") {
+      // Double gray checkmarks (delivered)
+      return (
+        <div className="flex items-center -space-x-1">
+          <FiCheck className="text-xs opacity-70" />
+          <FiCheck className="text-xs opacity-70" />
+        </div>
+      );
+    } else if (message.status === "sent") {
+      // Single checkmark (sent)
+      return <FiCheck className="text-xs opacity-70" />;
+    } else {
+      // Clock icon (sending)
+      return <FiClock className="text-xs opacity-50" />;
     }
   };
 
@@ -115,9 +148,7 @@ const MessageList = ({ messages = [], currentUserId, session }) => {
                 <span className="text-xs opacity-70">
                   {formatTimestamp(message.timestamp)}
                 </span>
-                {isCurrentUser && (
-                  <FiCheck className="text-xs opacity-70" />
-                )}
+                {getStatusIcon(message)}
               </div>
             </div>
 
@@ -150,9 +181,7 @@ const MessageList = ({ messages = [], currentUserId, session }) => {
                 <span className="text-xs opacity-70">
                   {formatTimestamp(message.timestamp)}
                 </span>
-                {isCurrentUser && (
-                  <FiCheck className="text-xs opacity-70" />
-                )}
+                {getStatusIcon(message)}
               </div>
             </div>
 
@@ -167,14 +196,12 @@ const MessageList = ({ messages = [], currentUserId, session }) => {
 
             /* ---------------- NORMAL TEXT MESSAGE ---------------- */
             <div className="space-y-1">
-              <p>{message.text}</p>
+              <p className="break-words">{message.text}</p>
               <div className="flex items-center justify-end space-x-1">
                 <span className="text-xs opacity-70">
                   {formatTimestamp(message.timestamp)}
                 </span>
-                {isCurrentUser && (
-                  <FiCheck className="text-xs opacity-70" />
-                )}
+                {getStatusIcon(message)}
               </div>
             </div>
           )}
