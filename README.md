@@ -235,7 +235,7 @@ MIT License - see [LICENSE](LICENSE) file
 
 **Jami Karthikeya**
 
-- GitHub: [[@Nisarg619](https://github.com/Nisarg619)](https://github.com/Karthik5299/Skill-Swap)
+- GitHub: [[@karthik5299](https://github.com/Karthik5299/Skill-Swap)]()
 - Email: jamikarthikeya99@gmail.com
 
 ---
